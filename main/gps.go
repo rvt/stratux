@@ -412,6 +412,13 @@ func initGPSSerial() bool {
 	}
 
 	serialPort = p
+
+	// Request GxAirCom. If it's not GxAirCom then the commands should be ignored by it's receiver
+	if ((globalStatus.GPS_detected_type & 0x0f) == GPS_TYPE_SERIAL) {
+		log.Printf("Polling for GxAirCom device")
+		requestGxAirComTrackerConfig()
+	}
+
 	return true
 
 }
@@ -1774,6 +1781,9 @@ func processNMEALineLow(l string, fakeGpsTimeToCurr bool) (sentenceUsed bool) {
 		// $PGXCF,<version>,<Output Serial>,<eMode>,<eOutputVario>,<output Fanet>,<output GPS>,<output FLARM>,<customGPSConfig>,<Aircraft Type (hex)>,<Address Type>,<Address (hex)>,<Pilot Name> 
 		//  0      1         2               3       4              5            6              7                 8                     9              10              11             12
 		log.Printf("Received GxAirCom Tracker configuration: " + strings.Join(x, ","))
+
+		gpsTimeOffsetPpsMs = 130 * time.Millisecond
+		globalStatus.GPS_detected_type = GPS_TYPE_GXAIRCOM
 
 		GXAcftType,_ := strconv.ParseInt(x[9], 16, 0)
 		if (globalSettings.GXAcftType==0) {
